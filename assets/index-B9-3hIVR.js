@@ -1673,8 +1673,8 @@ if "%anim_choice%"=="2" (
     echo  [*] 正在生成 Magisk 模块...
     set "mod_dir=bootanim_module"
     if exist "!mod_dir!" rmdir /s /q "!mod_dir!"
-    mkdir "!mod_dir!\system\media"
-    copy "!anim_zip!" "!mod_dir!\system\media\bootanimation.zip" >nul
+    mkdir "!mod_dir!\\system\\media"
+    copy "!anim_zip!" "!mod_dir!\\system\\media\\bootanimation.zip" >nul
     (
         echo id=BootAnimation
         echo name=Boot Animation Replacer
@@ -1682,12 +1682,12 @@ if "%anim_choice%"=="2" (
         echo versionCode=1
         echo author=Flash Master
         echo description=Custom Boot Animation
-    ) > "!mod_dir!\module.prop"
-    echo.  > "!mod_dir!\META-INF\com\google\android\update-binary" 2>nul
-    mkdir "!mod_dir!\META-INF\com\google\android" 2>nul
-    echo #MAGISK > "!mod_dir!\META-INF\com\google\android\updater-script"
-    echo. > "!mod_dir!\META-INF\com\google\android\update-binary"
-    powershell -command "Compress-Archive -Path '!mod_dir!\*' -DestinationPath 'bootanim_magisk.zip' -Force" 2>nul
+    ) > "!mod_dir!\\module.prop"
+    echo.  > "!mod_dir!\\META-INF\\com\\google\\android\\update-binary" 2>nul
+    mkdir "!mod_dir!\\META-INF\\com\\google\\android" 2>nul
+    echo #MAGISK > "!mod_dir!\\META-INF\\com\\google\\android\\updater-script"
+    echo. > "!mod_dir!\\META-INF\\com\\google\\android\\update-binary"
+    powershell -command "Compress-Archive -Path '!mod_dir!\\*' -DestinationPath 'bootanim_magisk.zip' -Force" 2>nul
     if exist bootanim_magisk.zip (
         echo  [√] Magisk 模块已生成: bootanim_magisk.zip
         echo  [*] 在 Magisk App 中刷入此模块即可。
