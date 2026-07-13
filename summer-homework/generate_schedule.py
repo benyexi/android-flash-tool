@@ -48,7 +48,7 @@ def set_cell(ws, row, col, value, *, font=None, fl=None, align=None, border=True
 
 
 CENTER = Alignment(horizontal="center", vertical="center", wrap_text=True)
-LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
+LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True, indent=1)  # 缩进,文字不贴边框
 
 
 def setup_page(ws):
@@ -112,20 +112,26 @@ def build_week(wb, week):
     row = 3
     section_rows = {}  # subject -> (start,end)
 
-    def task_row(subject, task, cells, note, light, *, height=24, merge_days=False):
+    def task_row(subject, task, cells, note, light, *, height=24, merge_days=False, left_days=False):
         nonlocal row
-        set_cell(ws, row, 2, task, font=Font(name=FONT, size=10, bold=False), fl=light, align=LEFT)
+        set_cell(ws, row, 2, task, font=Font(name=FONT, size=10.5, bold=False), fl=light, align=LEFT)
         if merge_days:
             ws.merge_cells(start_row=row, start_column=3, end_row=row, end_column=9)
-            set_cell(ws, row, 3, cells, font=Font(name=FONT, size=10), fl=light, align=CENTER)
+            set_cell(ws, row, 3, cells, font=Font(name=FONT, size=10.5), fl=light, align=CENTER)
             for cc in range(4, 10):
                 set_cell(ws, row, cc, None, fl=light)
         else:
             for i in range(7):
                 v = cells.get(i, "—")
                 bg = light if v not in ("—", "休息 · 自由活动") else GRAY
-                set_cell(ws, row, 3 + i, v, font=Font(name=FONT, size=10), fl=bg, align=CENTER)
-        set_cell(ws, row, 10, note, font=Font(name=FONT, size=9), fl=light, align=LEFT)
+                if left_days and v != "—":
+                    fnt, al = Font(name=FONT, size=10.5), LEFT   # 多行清单左对齐更规整
+                elif isinstance(v, str) and "□" in v:
+                    fnt, al = Font(name=FONT, size=12), CENTER   # 打钩方框放大
+                else:
+                    fnt, al = Font(name=FONT, size=10.5), CENTER
+                set_cell(ws, row, 3 + i, v, font=fnt, fl=bg, align=al)
+        set_cell(ws, row, 10, note, font=Font(name=FONT, size=10), fl=light, align=LEFT)
         ws.row_dimensions[row].height = height
         section_rows.setdefault(subject, [row, row])[1] = row
         if subject not in section_rows or section_rows[subject][0] > row:
@@ -192,16 +198,16 @@ def build_week(wb, week):
     }
     task_row("体育", "每日锻炼(先热身 → 练习 → 放松拉伸)", pe_daily,
              "目标:跳绳200个/分钟;仰卧起坐49个/分钟;体前屈膝盖伸直、手指过脚尖;有条件可加练加速跑",
-             PE_L, height=96)
+             PE_L, height=96, left_days=True)
     task_row("体育", "成绩记录(把当天成绩写进括号)",
              {i: "(        )" for i in range(5)}, "开学交任务单,学校按完成情况评优体奖章", PE_L, height=26)
     # 家长签字行
-    set_cell(ws, row, 2, "家长点评签字(每周一次)", font=Font(name=FONT, size=10, bold=True), fl=PE_L, align=LEFT)
+    set_cell(ws, row, 2, "家长点评签字(每周一次)", font=Font(name=FONT, size=10.5, bold=True), fl=PE_L, align=LEFT)
     ws.merge_cells(start_row=row, start_column=3, end_row=row, end_column=9)
     set_cell(ws, row, 3, "", fl="FFFFFF")
     for cc in range(4, 10):
         set_cell(ws, row, cc, None, fl="FFFFFF")
-    set_cell(ws, row, 10, "对应任务单“家长点评签字”栏", font=Font(name=FONT, size=9), fl=PE_L, align=LEFT)
+    set_cell(ws, row, 10, "对应任务单“家长点评签字”栏", font=Font(name=FONT, size=10), fl=PE_L, align=LEFT)
     ws.row_dimensions[row].height = 26
     pe_end = row
     row += 1
@@ -223,7 +229,7 @@ def build_week(wb, week):
     if week == 7:
         tips = ("★ 本周是体育任务单最后一周,周末把“注明”栏填好:跳绳最好成绩、跑步公里数及用时、仰卧起坐最好成绩 · "
                 "英语必做已全部排完,下周一(8月31日)填自评单")
-    set_cell(ws, row, 1, tips, font=Font(name=FONT, size=9.5, bold=True, color="7F6000"),
+    set_cell(ws, row, 1, tips, font=Font(name=FONT, size=10.5, bold=True, color="7F6000"),
              fl=NOTE_BG, align=LEFT)
     for cc in range(2, 11):
         set_cell(ws, row, cc, None, fl=NOTE_BG)
@@ -280,11 +286,11 @@ def build_week8(wb):
     for i in range(max(len(today_tasks), len(submit_list))):
         if i < len(today_tasks):
             sub, txt, light, dark = today_tasks[i]
-            set_cell(ws, r, 1, sub, font=Font(name=FONT, size=10, bold=True, color="FFFFFF"), fl=dark, align=CENTER)
-            set_cell(ws, r, 2, txt, font=Font(name=FONT, size=10.5), fl=light, align=LEFT)
+            set_cell(ws, r, 1, sub, font=Font(name=FONT, size=11, bold=True, color="FFFFFF"), fl=dark, align=CENTER)
+            set_cell(ws, r, 2, txt, font=Font(name=FONT, size=11.5), fl=light, align=LEFT)
         if i < len(submit_list):
             sub, txt, light, dark = submit_list[i]
-            set_cell(ws, r, 3, f"{sub} | {txt}", font=Font(name=FONT, size=10.5), fl=light, align=LEFT)
+            set_cell(ws, r, 3, f"{sub} | {txt}", font=Font(name=FONT, size=11.5), fl=light, align=LEFT)
             set_cell(ws, r, 4, "", fl=light)
         ws.row_dimensions[r].height = 34
         r += 1
@@ -331,10 +337,10 @@ def build_overview(wb):
 
     def item(sub, task, plan, light, dark, height=30):
         nonlocal r
-        set_cell(ws, r, 1, sub, font=Font(name=FONT, size=10, bold=True, color="FFFFFF"), fl=dark, align=CENTER)
-        set_cell(ws, r, 2, task, font=Font(name=FONT, size=10.5), fl=light, align=LEFT)
+        set_cell(ws, r, 1, sub, font=Font(name=FONT, size=10.5, bold=True, color="FFFFFF"), fl=dark, align=CENTER)
+        set_cell(ws, r, 2, task, font=Font(name=FONT, size=11), fl=light, align=LEFT)
         ws.merge_cells(start_row=r, start_column=3, end_row=r, end_column=4)
-        set_cell(ws, r, 3, plan, font=Font(name=FONT, size=10.5), fl=light, align=LEFT)
+        set_cell(ws, r, 3, plan, font=Font(name=FONT, size=11), fl=light, align=LEFT)
         set_cell(ws, r, 4, None, fl=light)
         ws.row_dimensions[r].height = height
         r += 1
@@ -419,10 +425,10 @@ def build_overview(wb):
     r += 1
     for i, (wk, m, e, p) in enumerate(weeks_summary):
         lt = "FFFFFF" if i % 2 == 0 else "F3F0F8"
-        set_cell(ws, r, 1, wk, font=Font(name=FONT, size=9.5, bold=True), fl=PRAC_L, align=CENTER)
-        set_cell(ws, r, 2, m, font=Font(name=FONT, size=9.5), fl=lt, align=LEFT)
-        set_cell(ws, r, 3, e, font=Font(name=FONT, size=9.5), fl=lt, align=LEFT)
-        set_cell(ws, r, 4, p, font=Font(name=FONT, size=9.5), fl=lt, align=LEFT)
+        set_cell(ws, r, 1, wk, font=Font(name=FONT, size=10, bold=True), fl=PRAC_L, align=CENTER)
+        set_cell(ws, r, 2, m, font=Font(name=FONT, size=10), fl=lt, align=LEFT)
+        set_cell(ws, r, 3, e, font=Font(name=FONT, size=10), fl=lt, align=LEFT)
+        set_cell(ws, r, 4, p, font=Font(name=FONT, size=10), fl=lt, align=LEFT)
         ws.row_dimensions[r].height = 26
         r += 1
 
