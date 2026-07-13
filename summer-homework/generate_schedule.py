@@ -13,7 +13,7 @@ from openpyxl.utils import get_column_letter
 # ---------- 颜色 ----------
 NAVY = "1F4E79"          # 标题
 HEADER_BLUE = "4472C4"   # 表头(工作日)
-WEEKEND_HD = "F4B183"    # 表头(周末)
+WEEKEND_HD = "C55A11"    # 表头(周末)——深橙,保证白字对比度,黑白打印也清晰
 MATH_D, MATH_L = "2E75B6", "DDEBF7"      # 数学
 ENG_D, ENG_L = "548235", "E2EFDA"        # 英语
 PE_D, PE_L = "C55A11", "FCE4D6"          # 体育
@@ -60,6 +60,14 @@ def setup_page(ws):
     ws.page_margins.left = ws.page_margins.right = 0.25
     ws.page_margins.top = ws.page_margins.bottom = 0.35
     ws.print_options.horizontalCentered = True
+
+
+def scale_rows(ws, last_row, target=780):
+    """按比例放大行高,让表格纵向铺满 A4(fitToWidth 缩放后仍有留白时使用)。"""
+    total = sum(ws.row_dimensions[r].height or 15 for r in range(1, last_row + 1))
+    factor = min(max(target / total, 1.0), 2.0)
+    for r in range(1, last_row + 1):
+        ws.row_dimensions[r].height = round((ws.row_dimensions[r].height or 15) * factor, 1)
 
 
 def day_dates(week):  # week: 1..8
@@ -138,11 +146,11 @@ def build_week(wb, week):
     if week == 4:
         cells = {i: "□ 记当天气温" for i in range(6)}
         cells[6] = "□ 记气温+绘统计图,提数学问题并解答"
-        task_row("数学", "实践作业①:统计一周(7天)气温", cells,
+        task_row("数学", "实践作业(原单第③项):统计一周(7天)气温", cells,
                  "A4纸完成,配表格/照片(实践4选2之一)", PRAC_L, height=32)
     if week == 6:
         cells = {6: "□ 设计一幅美丽的密铺图案"}
-        task_row("数学", "实践作业②:设计密铺图案", cells,
+        task_row("数学", "实践作业(原单第④项):设计密铺图案", cells,
                  "一种图形或几种图形组合密铺,A4纸完成(实践4选2之二)", PRAC_L, height=28)
     task_row("数学", "选做:《教材全解》拓展题 / 与家长商定提高内容",
              "学有余力时安排,不做硬性打卡", "自行安排", MATH_L, merge_days=True, height=20)
@@ -167,7 +175,7 @@ def build_week(wb, week):
         task_row("英语", "必做④ 学科实践:选3~4首喜爱的古诗,完成A3海报(每次15分钟)",
                  {0: "□ 选古诗\n构思", 1: "□ 设计\n版面草稿", 2: "□ 抄写古诗", 3: "□ 配图上色", 4: "□ 完善\n落款完成"},
                  "共5次;古诗最好是自己学过的中文古诗", ENG_L, height=34)
-        task_row("英语", "选做② 英语视听:英文动画电影 / BBC纪录片(每次≤10分钟)",
+        task_row("英语", "选做② 英语试听练习:英文动画电影 / BBC记录片(每次≤10分钟)",
                  {2: "□ ≤10分钟", 4: "□ ≤10分钟"}, "共2次,内容自选", ENG_L)
     eng_end = row - 1
 
@@ -178,7 +186,7 @@ def build_week(wb, week):
         1: "□ 热身\n□ 跳绳200个/组×4组\n□ 1分钟仰卧起坐×2组\n(记成绩)\n□ 坐位体前屈1分钟",
         2: "□ 热身\n□ 1分钟计时跳绳×4组\n(记成绩)\n□ 吹气球练肺活量×3组\n□ 放松拉伸",
         3: "□ 热身\n□ 3分钟耐力跳绳\n(自选音乐,记总个数)\n□ 放松拉伸",
-        4: "□ 热身\n□ 耐力跑2公里\n(避开正午炎热,记录)\n□ 放松拉伸",
+        4: "□ 热身\n□ 耐力跑2公里\n(避开中午炎热时段,\n注意防暑降温,并记录)\n□ 放松拉伸",
         5: "休息 · 自由活动",
         6: "休息 · 自由活动",
     }
@@ -220,6 +228,7 @@ def build_week(wb, week):
     for cc in range(2, 11):
         set_cell(ws, row, cc, None, fl=NOTE_BG)
     ws.row_dimensions[row].height = 26
+    scale_rows(ws, row)
 
 
 # =====================================================================
@@ -288,6 +297,7 @@ def build_week8(wb):
                         "如有未完成项目,利用这三天全部补齐!",
              font=Font(name=FONT, size=10.5, bold=True, color="7F6000"), fl=NOTE_BG, align=LEFT)
     ws.row_dimensions[r].height = 28
+    scale_rows(ws, r)
 
 
 # =====================================================================
@@ -298,6 +308,7 @@ def build_overview(wb):
     ws.title = "总览"
     ws.sheet_properties.tabColor = NAVY
     setup_page(ws)
+    ws.page_setup.orientation = "portrait"  # 总览内容纵向长,竖版打印利用率更高
     ws.page_setup.fitToHeight = 1
     for col, w in {"A": 8, "B": 52, "C": 40, "D": 40}.items():
         ws.column_dimensions[col].width = w
@@ -350,7 +361,7 @@ def build_overview(wb):
     item("实践", "实践性作业任选两项,自己设计作业格式,配照片或表格,A4纸完成:①查找数学游戏,和朋友玩并记录规则 "
          "②调查小区占地面积、居住人口、活动面积,写调查报告 ③统计某一周(7天)气温,记录成表并绘统计图,提出数学问题并解答 "
          "④设计一幅美丽的密铺图案(单一图形或多图形组合)",
-         "建议选③和④:第4周每天记气温、周日成图并提问解答;第6周周日设计密铺图案。也可换成①或②,时间照用", MATH_L, MATH_D, 56)
+         "建议选③和④:第4周每天记气温、周日成图并提问解答;第6周周日设计密铺图案。也可换成①或②,时间照用", MATH_L, MATH_D, 62)
 
     # ---- 英语 ----
     section("二、英语暑假作业(不含周六日和法定节假日;开学报到第一天上交学习自评单)", ENG_D)
@@ -365,7 +376,7 @@ def build_overview(wb):
          "第7周周一至周五,每天15分钟分步完成:选诗→版面→抄写→配图→完善", ENG_L, ENG_D, 34)
     item("选做①", "学唱一首英文歌曲,歌曲自选,共计2天,每次5分钟",
          "第5周周五、第6周周五", ENG_L, ENG_D)
-    item("选做②", "英语视听练习,一个英文动画电影或BBC纪录片,内容自选,共计2天,每次不超过10分钟",
+    item("选做②", "英语试听练习,一个英文动画电影或BBC记录片,内容自选,共计2天,每次不超过10分钟",
          "第7周周三、周五", ENG_L, ENG_D)
     item("自评单", "开学报到第一天上交《暑假英语学习自评单》:是否完成4项必做、是否完成2项选做,并写对下学期英语课的想法和建议",
          "8月31日填写,9月1日上交", ENG_L, ENG_D, 34)
@@ -375,7 +386,7 @@ def build_overview(wb):
     head_row(PE_L)
     item("周一", "①准备热身活动 ②一分钟计时跳绳×4组,并记录成绩 ③坐位体前屈拉伸(膝盖伸直、手触脚尖)1分钟",
          "已排入每周计划页“体育”栏", PE_L, PE_D)
-    item("周二", "①准备热身活动 ②跳绳200个/组×4组 ③一分钟仰卧起坐2组,并记录成绩 ④坐位体前屈拉伸1分钟",
+    item("周二", "①准备热身活动 ②跳绳200个/组×4组 ③一分钟仰卧起坐2组,并记录成绩 ④坐位体前屈拉伸,膝盖伸直,手触脚尖1分钟",
          "同上", PE_L, PE_D)
     item("周三", "①准备热身运动 ②一分钟计时跳绳×4组,并记录成绩 ③肺活量练习(吸足气吹气球3组) ④放松拉伸",
          "同上", PE_L, PE_D)
@@ -420,6 +431,7 @@ def build_overview(wb):
                         "孩子每完成一项在□打✓,周日晚家长检查并签字。英语作业不含周六日及法定节假日(暑期内无法定节假日)。",
              font=Font(name=FONT, size=10, bold=True, color="7F6000"), fl=NOTE_BG, align=LEFT)
     ws.row_dimensions[r].height = 30
+    scale_rows(ws, r, target=1020)
 
 
 def main():
